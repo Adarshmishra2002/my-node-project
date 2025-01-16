@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# GitHub repository URL
+GIT_REPO="https://github.com/Adarshmishra2002/node-project-with-dockerfile.git"
+IMAGE_NAME="adarsh"
+# Clone the repository
+if [ ! -d "node-project-with-dockerfile" ]; then
+    echo "Cloning the repository..."
+    git clone "$GIT_REPO"
+    echo "Repository cloned successfully!"
+else
+    echo "Repository already exists."
+fi
+
+# Podman image banana (Dockerfile ke saath)
+cd node-project-with-dockerfile
+podman build -t $IMAGE_NAME .
+
+container_name="mishra-container"
+
+# Podman container run karo
+echo "Podman container create aur run ho raha hai: $container_name"
+podman run -d --name $container_name -p 4001:8080 $IMAGE_NAME
+
+# Container run hone ka status check karo
+if [ $? -eq 0 ]; then
+    echo "Podman container successfully create aur run ho gaya hai!"
+else
+    echo "Kuch galat ho gaya. Podman container create nahi ho paayi."
+    exit 1 # Script ko terminate karo agar container run nahi hota
+fi
+
+echo "Container ke health ko check kiya ja raha hai using curl..."
+sleep 5 # Thoda time do container ko initialize hone ke liye
+
+response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4001)
+
+if [ "$response" -eq 200 ]; then
+    echo "Container sahi se run kar raha hai! HTTP response code: $response"
+    # Browser open command
+    if which xdg-open > /dev/null; then
+        xdg-open http://localhost:4001 # Linux systems
+    else
+        echo "Browser automatically open karne ka command nahi mila."
+    fi
+else
+    echo "Kuch galat ho gaya. HTTP response code: $response"
+fi
